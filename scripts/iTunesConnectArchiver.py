@@ -227,7 +227,7 @@ class AppStoreSalesDataMunger(object):
 					continue
 	
 				rowFields = {}
-				rowFields['productID']		= row[2]
+				rowFields['productID']		= int(row[2])
 				rowFields['date']			= time.strptime( row[11], '%m/%d/%Y' )
 				rowFields['salesType']		= int(row[8])
 				rowFields['units']			= int(row[9])
@@ -443,7 +443,7 @@ class AppStoreSalesDataReporting(object):
 		
 		report += '\n'
 		for pid in self._dataStorage.fetchAllProductIDs():
-			report += '### Product #%s' % pid
+			report += '### Product #%d' % pid
 			report += self._chartForProductID( pid )
 		
 		return report
@@ -497,7 +497,7 @@ def main(sysArgs):
 	hadValidCommands = False
 	if 'update' in arguments:
 		rawSalesData = AppStoreSalesDataFetcher( options.username, options.password ).fetchAll()
-		parsedSalesData = AppStoreSalesDataMunger().munge( rawSalesData, 'SEK' ) #Should make this an option...
+		parsedSalesData = AppStoreSalesDataMunger().munge( rawSalesData, 'USD' ) #Should make this an option...
 		dataStorage.storeDays( parsedSalesData )
 		hadValidCommands = True
 	

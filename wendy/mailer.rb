@@ -4,12 +4,11 @@ require 'action_mailer_optional_tls/init'
 
 class Mailer < ActionMailer::Base
   helper :mailer
-  
-  def build_report(build, recipients, from, subject, message)
+
+  def update_failed(recipients, from, subject, message)
     @subject      = "[Wendy] #{subject.capitalize}"
     @content_type = "text/html"
     @body         = {
-        :build => build,
         :message => message
     }
     @recipients   = recipients
@@ -18,7 +17,7 @@ class Mailer < ActionMailer::Base
     @headers      = {}
   end
 
-  def build_failure(recipients, from, subject, message)
+  def sales_report(recipients, from, subject, message)
     @subject      = "[Wendy] #{subject.capitalize}"
     @content_type = "text/html"
     @body         = {
