@@ -1,0 +1,62 @@
+iTunesConnectArchiver v1.0.1
+========================
+**Rogue Amoeba Software, LLC**  
+**qdc@rogueamoeba.com**  
+
+
+About
+=====
+
+iTunesConnectArchiver is a python application for automatically retrieving and reporting sales data from Apple's iTunes Connect website. Although fully functional on it's own, it is intended more as a starting point from which one can build their own reporting tools.
+
+iTunesConnectArchiver is based on original work by Kirby Tuner, AppDailySales: http://code.google.com/p/appdailysales/ and  the wonderful Beautiful Soup library: http://www.crummy.com/software/BeautifulSoup/
+
+Requirements
+============
+
+python 2.6 or later, with support for sqlite3 module  
+Beautiful Soup (included)  
+
+Usage
+=====
+
+iTunesConnectArchiver revolves around the idea of a sales database. The sales database (an SQLite 3 database) stores a parsed representation of the data avaliable on iTunes Connect. Running the *update* command will create a new database, or update an existing database with whatever new data is avaliable on the site:
+
+Creating or updating a sales database:
+--------------------------------------
+    iTunesConnectArchiver --username=MyAppleID --password=MyAppleIDPassword --database=/path/to/data.sqlite update
+
+Each time update is run, it collects -all- avaliable data from iTunes Connect (typically the past 7 days) and merges it into the database. This smooths out problems with missing days, if web servers are down for a day or two, the script will happily merge in the data the next time it successfully runs. 
+
+Furthermore, iTunesConnectArchiver will *attempt* to convert all currency units to US Dollars. It does this based on the exchange rate for the day of the sale. Note that this is -different- from Apple's accounting, where the exchange rate is done on the day the payment to the developer is made. Thus, do *not* use iTunesConnectArchiver for accounting purposes, it is for guidence only.
+
+Once data has been collected, iTunesConnectArchiver can be used to print out a pretty ASCII graph of the stats and sales with the *report* command:
+
+Viewing a report from a sales database:
+--------------------------------------
+    iTunesConnectArchiver -d /path/to/data.sqlite report
+
+This will produce pretty ASCII charts'n'graphs. Overall sales states only include products that have a non-zero price. Charts will be emitted for free products, representing their download count.
+
+License
+=======
+
+Copyright (c) 2008-2009 Rogue Amoeba Software LLC, Kirby Tuner
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
