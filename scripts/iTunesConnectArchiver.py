@@ -443,7 +443,7 @@ class AppStoreSalesDataReporting(object):
 		
 		report += '\n'
 		for pid in self._dataStorage.fetchAllProductIDs():
-			report += '### Product #%d' % pid
+			report += '### Product #%s' % pid
 			report += self._chartForProductID( pid )
 		
 		return report
