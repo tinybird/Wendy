@@ -497,7 +497,7 @@ def main(sysArgs):
 	hadValidCommands = False
 	if 'update' in arguments:
 		rawSalesData = AppStoreSalesDataFetcher( options.username, options.password ).fetchAll()
-		parsedSalesData = AppStoreSalesDataMunger().munge( rawSalesData, 'USD' ) #Should make this an option...
+		parsedSalesData = AppStoreSalesDataMunger().munge( rawSalesData, 'SEK' ) #Should make this an option...
 		dataStorage.storeDays( parsedSalesData )
 		hadValidCommands = True
 	
