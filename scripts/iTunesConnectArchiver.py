@@ -227,7 +227,7 @@ class AppStoreSalesDataMunger(object):
 					continue
 	
 				rowFields = {}
-				rowFields['productID']		= int(row[2])
+				rowFields['productID']		= row[2]
 				rowFields['date']			= time.strptime( row[11], '%m/%d/%Y' )
 				rowFields['salesType']		= int(row[8])
 				rowFields['units']			= int(row[9])

@@ -21,9 +21,9 @@ end
 
 while(true) do
   begin
-    #CommandLine::execute([command, '-d', databasePath, '-u', Settings.itc_username, '-p', Settings.itc_password, 'update']) do |io|
-    #  BobLogger.info "Update succeeded"
-    #end
+    CommandLine::execute([command, '-d', databasePath, '-u', Settings.itc_username, '-p', Settings.itc_password, 'update']) do |io|
+      BobLogger.info "Update succeeded"
+    end
   rescue => e
     # Strip out the password.
     error =  "#{e}".gsub(/-p .* /, '-p xxx')
@@ -38,7 +38,7 @@ while(true) do
   now = Time.now.localtime
 
   # Send reports after 14:00 and if we haven't sent before today. The check is a bit crude...
-  if now.hour > 14 and now.day != lastDateComponents[2]
+  if now.hour >= 14 and now.day != lastDateComponents[2]
     begin
       CommandLine::execute([command, '-d', databasePath, 'report']) do |io|
         if Settings.sender and Settings.admin_email_addresses.length > 0
