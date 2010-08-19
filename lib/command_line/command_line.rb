@@ -80,7 +80,7 @@ module CommandLine
     
     options[:env].each{|k,v| ENV[k]=v}
     begin
-      BobLogger.debug "#{Platform.prompt} #{format_for_printing(cmd)}" if options[:stdout].nil?
+      #BobLogger.debug "#{Platform.prompt} #{format_for_printing(cmd)}" if options[:stdout].nil?
       result = IO.popen(full_cmd, options[:mode]) do |io|
         if proc
           proc.call(io)
