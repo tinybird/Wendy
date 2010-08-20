@@ -24,14 +24,14 @@ while(true) do
   now = Time.now.localtime
 
   # Check after 14:00 and if we haven't checked before today. The check is a bit crude...
-  if 1 or now.hour >= 14 and now.day != lastDateComponents[2]
+  if now.hour >= 14 and now.day != lastDateComponents[2]
     # Update the sales data from iTunes Connect.
     begin
       BobLogger.info "Updating sales data"
-      #CommandLine::execute([updateCommand, '-d', databasePath, '-u', Settings.itc_username, '-p', Settings.itc_password, 'update']) do |io|
-      #  BobLogger.info "Update succeeded"
-      #end
-  
+      CommandLine::execute([updateCommand, '-d', databasePath, '-u', Settings.itc_username, '-p', Settings.itc_password, 'update']) do |io|
+        BobLogger.info "Update succeeded"
+      end
+
       # Send report.
       begin
         BobLogger.info "Sending report"

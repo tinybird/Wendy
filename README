@@ -1,11 +1,16 @@
 Wendy the sales bot
 ===================
 
+This is a simple bot using the iTunesConnectArchiver from rouge amoeba:
+
+http://www.rogueamoeba.com/utm/2009/05/04/itunesconnectarchiver/
+
+
 Setting up site wide settings:
 ------------------------------
 
 $ mkdir -p ~/.wendy
-$ cat > ~/.bob/site_config.rb << EOF
+$ cat > ~/.wendy/site_config.rb << EOF
 ActionMailer::Base.smtp_settings = {
   :tls =>            true,
   :address =>        "smtp.gmail.com",
@@ -17,10 +22,10 @@ ActionMailer::Base.smtp_settings = {
 }
 
 # Mandatory sender email address.
-Settings.sender = 'bobthebuilder@yourdomain.com'
+Settings.sender = 'wendy@yourdomain.com'
 
-# Optional, amount of seconds to sleep between polling attemps. Default is 21600.
-# Settings.sleep_duration = 21600
+# Optional, amount of seconds to sleep between polling attemps. Default is 2 hours.
+# Settings.sleep_duration = 2*60*60
 
 # Optional list of addresses to notify if the bot dies.
 # Settings.admin_email_addresses = [ 'me@domain.com' ]
