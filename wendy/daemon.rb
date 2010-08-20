@@ -11,7 +11,8 @@ BobLogger.info "Sales bot started at #{Time.now}"
 
 root = File.expand_path("#{File.dirname(__FILE__)}/..")
 databasePath = File.join(root, 'sales.sqlite')
-command = File.join(root, 'scripts', 'iTunesConnectArchiver.py')
+updateCommand = File.join(root, 'scripts', 'iTunesConnectArchiver.py')
+reportCommand = File.join(root, 'scripts', 'report.py')
 
 while(true) do
   begin
@@ -23,16 +24,18 @@ while(true) do
   now = Time.now.localtime
 
   # Check after 14:00 and if we haven't checked before today. The check is a bit crude...
-  if now.hour >= 14 and now.day != lastDateComponents[2]
+  if 1 or now.hour >= 14 and now.day != lastDateComponents[2]
     # Update the sales data from iTunes Connect.
     begin
-      CommandLine::execute([command, '-d', databasePath, '-u', Settings.itc_username, '-p', Settings.itc_password, 'update']) do |io|
-        BobLogger.info "Update succeeded"
-      end
+      BobLogger.info "Updating sales data"
+      #CommandLine::execute([updateCommand, '-d', databasePath, '-u', Settings.itc_username, '-p', Settings.itc_password, 'update']) do |io|
+      #  BobLogger.info "Update succeeded"
+      #end
   
       # Send report.
       begin
-        CommandLine::execute([command, '-d', databasePath, 'report']) do |io|
+        BobLogger.info "Sending report"
+        CommandLine::execute([reportCommand, '-d', databasePath]) do |io|
           if Settings.sender and Settings.admin_email_addresses.length > 0
              Mailer.send(:deliver_sales_report, Settings.admin_email_addresses,
                          Settings.sender, "Sales report", io.readlines)
@@ -42,12 +45,13 @@ while(true) do
         File.open(File.join(root, "lastReportDate"), 'w') { |f| f << "#{now}" }
 
       rescue => e
+        BobLogger.info "Something went wrong:\n#{e}"
         # Ignore for now...
       end
 
     rescue => e
       # Strip out the password.
-      error =  "#{e}".gsub(/-p .* /, '-p <password>')
+      error =  "#{e}".gsub(/-p .* /, '-p *')
       BobLogger.info "Updating sales data failed:\n#{error}"
       if Settings.sender and Settings.admin_email_addresses.length > 0
          Mailer.send(:deliver_update_failed, Settings.admin_email_addresses,
