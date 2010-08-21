@@ -271,7 +271,7 @@ class AppStoreSalesDataStorage(object):
 		self._db.execute( '''CREATE TABLE IF NOT EXISTS sales (
 							id INTEGER PRIMARY KEY,
 							date CHAR(16),
-							pid	INTEGER,
+							pid	TEXT,
 							incomeRevenue REAL,
 							incomeUnits INTEGER,
 							refundLoss REAL,
