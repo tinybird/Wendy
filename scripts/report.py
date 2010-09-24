@@ -154,13 +154,13 @@ def main(sysArgs):
     usage = '%prog: [options]'
     parser = optparse.OptionParser(usage = usage)
     
-    parser.add_option('-d', '--database',
-                        dest = 'databasePath', default = None,
-                        metavar = '/PATH/TO/DB', help = 'Database storage file path (required)')
+    parser.add_option('-d', '--directory',
+                      dest='directory', default=None,
+                      metavar='/PATH/TO/WORKING-DIR', help='Directory path for database and reports (required)')
     
     (options, arguments) = parser.parse_args(sysArgs)
     
-    optionsValid = (options.databasePath != None)
+    optionsValid = (options.directory != None)
     
     options.reportRange = ()
     
@@ -168,7 +168,8 @@ def main(sysArgs):
         parser.print_help(file = sys.stderr)
         sys.exit(-1)
     
-    dataStorage = AppStoreSalesDataStorage(os.path.expanduser(options.databasePath))
+    root = os.path.expanduser(options.directory)
+    dataStorage = AppStoreSalesDataStorage(os.path.join(root, 'sales.sqlite'))
     
     reporter = AppStoreSalesDataReporting(dataStorage, options.reportRange)
     print reporter.generateReport()

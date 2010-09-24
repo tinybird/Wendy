@@ -10,8 +10,8 @@ BobLogger.info "\n========================================================"
 BobLogger.info "Sales bot started at #{Time.now}"
 
 root = File.expand_path("#{File.dirname(__FILE__)}/..")
-databasePath = File.join(root, 'sales.sqlite')
-updateCommand = File.join(root, 'scripts', 'iTunesConnectArchiver.py')
+downloadCommand = File.join(root, 'scripts', 'WendyHelper')
+processCommand = File.join(root, 'scripts', 'process.py')
 reportCommand = File.join(root, 'scripts', 'report.py')
 
 while(true) do
@@ -27,20 +27,26 @@ while(true) do
   if now.hour >= 14 and now.day != lastDateComponents[2]
     # Update the sales data from iTunes Connect.
     begin
-      BobLogger.info "Updating sales data"
-      CommandLine::execute([updateCommand, '-d', databasePath, '-u', Settings.itc_username, '-p', Settings.itc_password, 'update']) do |io|
-        BobLogger.info "Update succeeded"
+      BobLogger.info "Downloading sales data"
+      CommandLine::execute([downloadCommand, '-d', root, '-u', Settings.itc_username, '-p', Settings.itc_password]) do |io|
+        BobLogger.info io.readlines # "Download succeeded"
+      end
+
+      BobLogger.info "Processing sales data"
+      CommandLine::execute([processCommand, '-d', root]) do |io|
+        BobLogger.info io.readlines # "Processing succeeded"
       end
 
       # Send report.
       begin
         BobLogger.info "Sending report"
-        CommandLine::execute([reportCommand, '-d', databasePath]) do |io|
+        CommandLine::execute([reportCommand, '-d', root]) do |io|
           if Settings.sender and Settings.admin_email_addresses.length > 0
              Mailer.send(:deliver_sales_report, Settings.admin_email_addresses,
                          Settings.sender, "Sales report", io.readlines)
            end
         end
+        puts "Report sent"
         # Write last report date.
         File.open(File.join(root, "lastReportDate"), 'w') { |f| f << "#{now}" }
 
