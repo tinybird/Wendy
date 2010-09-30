@@ -5,75 +5,78 @@ require site_config if File.exists?(site_config + ".rb")
 require 'platform'
 require 'command_line'
 require 'parsedate'
+require 'sqlite3'
 
 BobLogger.info "\n========================================================"
 BobLogger.info "Sales bot started at #{Time.now}"
 
-root = File.expand_path("#{File.dirname(__FILE__)}/..")
-downloadCommand = File.join(root, 'scripts', 'WendyHelper')
-processCommand = File.join(root, 'scripts', 'process.py')
-reportCommand = File.join(root, 'scripts', 'report.py')
+$root = File.expand_path("#{File.dirname(__FILE__)}/..")
 
-while(true) do
+def update
+  downloadCommand = File.join($root, 'scripts', 'WendyHelper')
+  processCommand = File.join($root, 'scripts', 'process.py')
+  reportCommand = File.join($root, 'scripts', 'report.py')
+
+  # Update the sales data from iTunes Connect.
   begin
-    lastDateComponents = ParseDate.parsedate(File.read(File.join(root, "lastReportDate")))
-  rescue
-    lastDateComponents = [2000, 1, 1, 0, 0, 0, "UTC", 0]
-  end
+    BobLogger.info "Downloading sales data"
+    #CommandLine::execute([downloadCommand, '-d', $root, '-u', Settings.itc_username, '-p', Settings.itc_password]) do |io|
+    #  BobLogger.info io.readlines # "Download succeeded"
+    #end
 
-  now = Time.now.localtime
+    BobLogger.info "Processing sales data"
+    #CommandLine::execute([processCommand, '-d', $root]) do |io|
+    #  BobLogger.info io.readlines # "Processing succeeded"
+    #end
 
-  # Check after 14:00 and if we haven't checked before today. The check is a bit crude...
-  if now.hour >= 14 and now.day != lastDateComponents[2]
-    # Clear out any previous errors.
+    # Send report.
     begin
-      File.delete(File.join(root, "lastFailureDate"))
-    rescue
-      # Ignore...
-    end
-    
-    # Update the sales data from iTunes Connect.
-    begin
-      BobLogger.info "Downloading sales data"
-      CommandLine::execute([downloadCommand, '-d', root, '-u', Settings.itc_username, '-p', Settings.itc_password]) do |io|
-        BobLogger.info io.readlines # "Download succeeded"
+      BobLogger.info "Sending report"
+      CommandLine::execute([reportCommand, '-d', $root]) do |io|
+        if Settings.sender and Settings.report_email_addresses.length > 0
+           Mailer.send(:deliver_sales_report, Settings.report_email_addresses,
+                       Settings.sender, "Sales report", io.readlines)
+         end
       end
+      puts "Report sent"
 
-      BobLogger.info "Processing sales data"
-      CommandLine::execute([processCommand, '-d', root]) do |io|
-        BobLogger.info io.readlines # "Processing succeeded"
-      end
-
-      # Send report.
+      # Things went fine, make sure to clear out any previous failures.
       begin
-        BobLogger.info "Sending report"
-        CommandLine::execute([reportCommand, '-d', root]) do |io|
-          if Settings.sender and Settings.report_email_addresses.length > 0
-             Mailer.send(:deliver_sales_report, Settings.report_email_addresses,
-                         Settings.sender, "Sales report", io.readlines)
-           end
-        end
-        puts "Report sent"
-        # Write last report date.
-        File.open(File.join(root, "lastReportDate"), 'w') { |f| f << "#{now}" }
-
-      rescue => e
-        BobLogger.info "Something went wrong:\n#{e}"
-        # Ignore for now...
+        File.delete(File.join($root, "lastFailureDate"))
+      rescue
+        # Ignore...
       end
 
     rescue => e
-      # Strip out the password.
-      error =  "#{e}".gsub(/-p .* /, '-p *')
-      BobLogger.info "Updating sales data failed:\n#{error}"
-      if not File.file?(File.join(root, "lastFailureDate")) and Settings.sender and
-         Settings.admin_email_addresses.length > 0
-        Mailer.send(:deliver_update_failed, Settings.admin_email_addresses,
-                    Settings.sender, "Sales update failed", error)
-        File.open(File.join(root, "lastFailureDate"), 'w') { |f| f << "#{now}" }
-       end
+      BobLogger.info "Something went wrong:\n#{e}"
+      # Ignore for now...
+    end
+
+  rescue => e
+    # Strip out the password.
+    error =  "#{e}".gsub(/-p .* /, '-p *')
+    BobLogger.info "Updating sales data failed:\n#{error}"
+    if not File.file?(File.join($root, "lastFailureDate")) and Settings.sender and
+       Settings.admin_email_addresses.length > 0
+      Mailer.send(:deliver_update_failed, Settings.admin_email_addresses,
+                  Settings.sender, "Sales update failed", error)
+      File.open(File.join($root, "lastFailureDate"), 'w') { |f| f << "#{now}" }
+     end
+  end
+end
+
+
+while(true) do
+  # Check after 14:00 and if we haven't checked before today.
+  if Time.now.localtime.hour >= 14
+    db = SQLite3::Database.new(File.join($root, 'sales.sqlite'))
+    rows = db.execute("SELECT sales.date FROM sales WHERE date(sales.date) == date('now', '-1 day')")
+    if rows.length == 0
+      update
     end
   end
+
+  #exit 0
 
   BobLogger.info "Sales bot #{Process.pid} still alive at #{Time.now}, sleeping..."
   sleep Settings.sleep_duration
