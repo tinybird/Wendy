@@ -19,7 +19,7 @@ class AppStoreSalesDataStorage(object):
                                     SUM(sales.incomeUnits) as units,
                                     SUM(sales.incomeRevenue) as revenue
                             FROM sales
-                            WHERE (julianday(sales.date) BETWEEN (julianday(date('now'))-?) AND (julianday(date('now')))) AND sales.incomeRevenue>0 '''
+                            WHERE ((julianday(sales.date) BETWEEN (julianday(date('now'))-?) AND (julianday(date('now')))) AND sales.incomeRevenue>0) ORDER by sales.date DESC'''
         
         stats = {}
         for daysAgo in dayRanges:
@@ -56,6 +56,9 @@ class AppStoreSalesDataReporting(object):
         if reportRange == None:
             reportRange = ()
         self._reportRange = reportRange
+
+    def _sortedOverallStats(self, stats):
+        return [(key, stats[key]) for key in sorted(stats.keys())]
     
     def _overallSales(self):
         overallStats = self._dataStorage.fetchOverallStats()
@@ -63,31 +66,31 @@ class AppStoreSalesDataReporting(object):
         output = '<table class="full">\n'
         output += '<tr>\n'
         output += '<td>Days ago</td>'
-        for (daysAgo, stats) in overallStats.iteritems():
+        for (daysAgo, stats) in self._sortedOverallStats(overallStats):
             output += '<td>%d</td>' % (daysAgo)
         output += '\n</tr>\n'
         
         output += '<tr>\n'
         output += '<td>Units/day</td>'
-        for (daysAgo, stats) in overallStats.iteritems():
+        for (daysAgo, stats) in self._sortedOverallStats(overallStats):
             output += '<td>%.1f</td>' % (stats[0] / float(max(1, daysAgo)))
         output += '\n</tr>\n'
         
         output += '<tr>\n'
         output += '<td>Units</td>'
-        for (daysAgo, stats) in overallStats.iteritems():
+        for (daysAgo, stats) in self._sortedOverallStats(overallStats):
             output += '<td>%d</td>' % stats[0]
         output += '\n</tr>\n'
         
         output += '<tr>\n'
         output += '<td>Rev/day</td>'
-        for (daysAgo, stats) in overallStats.iteritems():
+        for (daysAgo, stats) in self._sortedOverallStats(overallStats):
             output += '<td>%.0f SEK</td>' % (stats[1] / max(1, daysAgo))
         output += '\n</tr>\n'
         
         output += '<tr>\n'
         output += '<td>Revenue</td>'
-        for (daysAgo, stats) in overallStats.iteritems():
+        for (daysAgo, stats) in self._sortedOverallStats(overallStats):
             output += '<td>%.0f SEK</td>' % stats[1]
         output += '\n</tr>\n'
 
