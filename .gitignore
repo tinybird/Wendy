@@ -1,2 +1,6 @@
 sales.sqlite
 lastReportDate
+lastFailureDate
+DoneReports
+OriginalReports
+scripts/WendyHelper
