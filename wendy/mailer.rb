@@ -5,8 +5,12 @@ require 'action_mailer_optional_tls/init'
 class Mailer < ActionMailer::Base
   helper :mailer
 
+  def format_date(time)
+    return time.strftime("%Y-%m-%d")
+  end
+
   def update_failed(recipients, from, subject, message)
-    @subject      = "[Wendy] #{subject.capitalize}"
+    @subject      = "[Wendy] #{subject.capitalize} #{Time.now.localtime}"
     @content_type = "text/html"
     @body         = {
         :message => message
@@ -18,7 +22,7 @@ class Mailer < ActionMailer::Base
   end
 
   def sales_report(recipients, from, subject, message)
-    @subject      = "[Wendy] #{subject.capitalize}"
+    @subject      = "[Wendy] #{subject.capitalize} #{format_date(Time.now.localtime)}"
     @content_type = "text/html"
     @body         = {
         :message => message

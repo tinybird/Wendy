@@ -25,6 +25,13 @@ while(true) do
 
   # Check after 14:00 and if we haven't checked before today. The check is a bit crude...
   if now.hour >= 14 and now.day != lastDateComponents[2]
+    # Clear out any previous errors.
+    begin
+      File.delete(File.join(root, "lastFailureDate"))
+    rescue
+      # Ignore...
+    end
+    
     # Update the sales data from iTunes Connect.
     begin
       BobLogger.info "Downloading sales data"
@@ -41,8 +48,8 @@ while(true) do
       begin
         BobLogger.info "Sending report"
         CommandLine::execute([reportCommand, '-d', root]) do |io|
-          if Settings.sender and Settings.admin_email_addresses.length > 0
-             Mailer.send(:deliver_sales_report, Settings.admin_email_addresses,
+          if Settings.sender and Settings.report_email_addresses.length > 0
+             Mailer.send(:deliver_sales_report, Settings.report_email_addresses,
                          Settings.sender, "Sales report", io.readlines)
            end
         end
@@ -59,9 +66,11 @@ while(true) do
       # Strip out the password.
       error =  "#{e}".gsub(/-p .* /, '-p *')
       BobLogger.info "Updating sales data failed:\n#{error}"
-      if Settings.sender and Settings.admin_email_addresses.length > 0
-         Mailer.send(:deliver_update_failed, Settings.admin_email_addresses,
-                     Settings.sender, "Sales update failed", error)
+      if not File.file?(File.join(root, "lastFailureDate")) and Settings.sender and
+         Settings.admin_email_addresses.length > 0
+        Mailer.send(:deliver_update_failed, Settings.admin_email_addresses,
+                    Settings.sender, "Sales update failed", error)
+        File.open(File.join(root, "lastFailureDate"), 'w') { |f| f << "#{now}" }
        end
     end
   end

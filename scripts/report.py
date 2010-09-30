@@ -4,6 +4,7 @@
 import sys, os, time
 import optparse
 import sqlite3
+import re
 
 class AppStoreSalesDataStorage(object):
     def __init__(self, dbPath):
@@ -43,9 +44,9 @@ class AppStoreSalesDataStorage(object):
     
     def fetchStatsForProductID(self, pid, reportRange=()):
         if reportRange:
-            cursor = self._db.execute('SELECT sales.date, SUM(sales.incomeUnits), SUM(sales.incomeRevenue) FROM sales WHERE pid=? AND date >= ? AND date <=? GROUP BY sales.date ORDER by sales.date DESC', (pid,reportRange[0],reportRange[1]))
+            cursor = self._db.execute('SELECT sales.date, SUM(sales.incomeUnits), SUM(sales.incomeRevenue), sales.unitsByCountry FROM sales WHERE pid=? AND date >= ? AND date <=? GROUP BY sales.date ORDER by sales.date DESC', (pid,reportRange[0],reportRange[1]))
         else:
-            cursor = self._db.execute('SELECT sales.date, SUM(sales.incomeUnits), SUM(sales.incomeRevenue) FROM sales WHERE pid=? GROUP BY sales.date ORDER by sales.date DESC', (pid,))
+            cursor = self._db.execute('SELECT sales.date, SUM(sales.incomeUnits), SUM(sales.incomeRevenue), sales.unitsByCountry FROM sales WHERE pid=? GROUP BY sales.date ORDER by sales.date DESC', (pid,))
         return cursor.fetchall() #Pretty much exactly what we want anyway
 
 
@@ -94,6 +95,17 @@ class AppStoreSalesDataReporting(object):
         
         return output
 
+    def _fixupUnitsByCountry(self, str):
+        countries = str.split()
+        countries.sort()
+        p = re.compile('=')
+        out = ''
+        for country in countries:
+            if out != '':
+                out += ', '
+            out += p.sub(': ', country)
+        return out
+
     def _chartForProductID(self, pid):
         output = '<table>'
         
@@ -109,7 +121,7 @@ class AppStoreSalesDataReporting(object):
         totalRevenue = 0
         
         for row in productChart:
-            (date, units, revenue) = row
+            (date, units, revenue, unitsByCountry) = row
             
             totalUnits += units
             totalRevenue += revenue
@@ -118,6 +130,7 @@ class AppStoreSalesDataReporting(object):
             output += '<td>%s</td>' % date
             output += '<td>%d</td>' % units
             output += '<td>%.0f SEK</td>' % revenue
+            output += '<td class="countries">%s</td>' % self._fixupUnitsByCountry(unitsByCountry)
             output += '\n</tr>\n'
 
             if topRevenue:
@@ -130,6 +143,7 @@ class AppStoreSalesDataReporting(object):
         output += '<td>Total</td>'
         output += '<td>%d</td>' % totalUnits
         output += '<td>%.0f SEK</td>' % totalRevenue
+        output += '<td class="countries"></td>'
         output += '\n</tr>\n'
         
         output += '</table>\n\n'

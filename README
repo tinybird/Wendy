@@ -27,6 +27,9 @@ Settings.sender = 'wendy@yourdomain.com'
 # Optional, amount of seconds to sleep between polling attemps. Default is 2 hours.
 # Settings.sleep_duration = 2*60*60
 
+# List of addresses to send reports to.
+# Settings.report_email_addresses = [ 'me@domain.com' ]
+
 # Optional list of addresses to notify if the bot dies.
 # Settings.admin_email_addresses = [ 'me@domain.com' ]
 
