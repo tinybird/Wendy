@@ -1,7 +1,3 @@
-# Load site configuration, for email settings and other global configuration.
-site_config = File.join(ENV['HOME'], '.wendy', 'site_config')
-require site_config if File.exists?(site_config + ".rb")
-
 require 'platform'
 require 'command_line'
 require 'parsedate'
@@ -12,59 +8,57 @@ BobLogger.info "Sales bot started at #{Time.now}"
 
 $root = File.expand_path("#{File.dirname(__FILE__)}/..")
 
-def update
-  downloadCommand = File.join($root, 'scripts', 'WendyHelper')
-  processCommand = File.join($root, 'scripts', 'process.py')
+def send_report
   reportCommand = File.join($root, 'scripts', 'report.py')
 
-  # Update the sales data from iTunes Connect.
+  BobLogger.info "Sending report"
+  CommandLine::execute([reportCommand, '-d', $root]) do |io|
+    Mailer.send(:deliver_sales_report, Settings.report_email_addresses,
+                Settings.sender, "Sales report", io.readlines)
+  end
+  puts "Report sent"
+end
+
+def process
+  processCommand = File.join($root, 'scripts', 'process.py')
+
+  begin
+    BobLogger.info "Processing sales data"
+    CommandLine::execute([processCommand, '-d', $root]) do |io|
+      BobLogger.info "Processing succeeded"
+      return true
+    end
+  rescue => e
+  end
+  
+  return false
+end
+
+def update
+  downloadCommand = File.join($root, 'scripts', 'WendyHelper')
+
   begin
     BobLogger.info "Downloading sales data"
-    #CommandLine::execute([downloadCommand, '-d', $root, '-u', Settings.itc_username, '-p', Settings.itc_password]) do |io|
-    #  BobLogger.info io.readlines # "Download succeeded"
-    #end
-
-    BobLogger.info "Processing sales data"
-    #CommandLine::execute([processCommand, '-d', $root]) do |io|
-    #  BobLogger.info io.readlines # "Processing succeeded"
-    #end
-
-    # Send report.
-    begin
-      BobLogger.info "Sending report"
-      CommandLine::execute([reportCommand, '-d', $root]) do |io|
-        if Settings.sender and Settings.report_email_addresses.length > 0
-           Mailer.send(:deliver_sales_report, Settings.report_email_addresses,
-                       Settings.sender, "Sales report", io.readlines)
-         end
-      end
-      puts "Report sent"
-
-      # Things went fine, make sure to clear out any previous failures.
-      begin
-        File.delete(File.join($root, "lastFailureDate"))
-      rescue
-        # Ignore...
-      end
-
-    rescue => e
-      BobLogger.info "Something went wrong:\n#{e}"
-      # Ignore for now...
+    CommandLine::execute([downloadCommand, '-d', $root, '-u', Settings.itc_username, '-p', Settings.itc_password]) do |io|
+      BobLogger.info io.readlines # "Download succeeded"
     end
+    return true
 
   rescue => e
     # Strip out the password.
     error =  "#{e}".gsub(/-p .* /, '-p *')
     BobLogger.info "Updating sales data failed:\n#{error}"
-    if not File.file?(File.join($root, "lastFailureDate")) and Settings.sender and
-       Settings.admin_email_addresses.length > 0
+    if not File.file?(File.join($root, "lastFailureDate"))
       Mailer.send(:deliver_update_failed, Settings.admin_email_addresses,
                   Settings.sender, "Sales update failed", error)
-      File.open(File.join($root, "lastFailureDate"), 'w') { |f| f << "#{now}" }
-     end
+      File.open(File.join($root, "lastFailureDate"), 'w') { |f| f << "#{Time.now}" }
+    else
+      BobLogger.info "Not sending failure report again"
+    end
   end
-end
 
+  return false
+end
 
 while(true) do
   # Check after 14:00 and if we haven't checked before today.
@@ -72,7 +66,19 @@ while(true) do
     db = SQLite3::Database.new(File.join($root, 'sales.sqlite'))
     rows = db.execute("SELECT sales.date FROM sales WHERE date(sales.date) == date('now', '-1 day')")
     if rows.length == 0
-      update
+      update()
+    end
+
+    hasNewReports = Dir.glob(File.join($root, 'OriginalReports', '*.txt.gz')).length > 0
+    if hasNewReports
+      if process()
+        begin
+          send_report()
+          File.delete(File.join($root, "lastFailureDate"))
+        rescue
+          # Ignore...
+        end
+      end
     end
   end
 

@@ -14,27 +14,30 @@ class AppStoreSalesDataStorage(object):
 
         self._db = sqlite3.connect(dbPath)
     
-    def fetchOverallStats(self, dayRanges=[-1,-2,1,2,3,4,5,6,7,30,90,180,365,9999]):
-        sqlDaysoAgoStats = '''SELECT  (julianday('now') - julianday(min(sales.date))) as daysAgo,
-                                    SUM(sales.incomeUnits) as units,
-                                    SUM(sales.incomeRevenue) as revenue
-                            FROM sales
-                            WHERE ((julianday(sales.date) BETWEEN (julianday(date('now'))-?) AND (julianday(date('now')))) AND sales.incomeRevenue>0) ORDER by sales.date DESC'''
+    def fetchOverallStats(self, dayRanges=[1,2,3,4,5,6,7,30,90,180,365,9999]):
+        statsSql = '''SELECT (julianday('now') - julianday(min(sales.date))), SUM(sales.incomeUnits), SUM(sales.incomeRevenue)
+                      FROM sales
+                      WHERE ((julianday(sales.date) BETWEEN (julianday(date('now'))-?) AND (julianday(date('now')))) AND sales.incomeRevenue > 0)
+                      ORDER by sales.date DESC'''
+
+        revenueSql = '''SELECT SUM(sales.incomeRevenue) FROM sales
+                        WHERE date(sales.date) == date('now', ?)
+                        ORDER by sales.date DESC'''
         
         stats = {}
         for daysAgo in dayRanges:
-            if daysAgo == -1:
-                daysAgo = time.localtime()[2] #MonthDay
-            elif daysAgo == -2:
-                daysAgo = time.localtime()[-2] #YearDay
-            
-            cursor = self._db.execute(sqlDaysoAgoStats, (daysAgo,))
-            (actualDaysAgo, units, revenue) = cursor.fetchone()
+            cursor = self._db.execute(statsSql, (daysAgo,))
+            (actualDaysAgo, sumUnits, sumRevenue) = cursor.fetchone()
             
             if actualDaysAgo != None:
-                daysAgo = int(actualDaysAgo-1) #Think this is correct, I always mess this caclulation up
-            
-            stats[daysAgo] = (max(units,0), max(revenue,0))
+                daysAgo = int(actualDaysAgo)
+                
+                revenueCursor = self._db.execute(revenueSql, ('%d day' % -daysAgo,))
+                (revenue,) = revenueCursor.fetchone()
+            else:
+                revenue = 0
+                
+            stats[daysAgo] = (max(sumUnits, 0), max(sumRevenue, 0), revenue)
         
         return stats
     
@@ -47,7 +50,7 @@ class AppStoreSalesDataStorage(object):
             cursor = self._db.execute('SELECT sales.date, SUM(sales.incomeUnits), SUM(sales.incomeRevenue), sales.unitsByCountry FROM sales WHERE pid=? AND date >= ? AND date <=? GROUP BY sales.date ORDER by sales.date DESC', (pid,reportRange[0],reportRange[1]))
         else:
             cursor = self._db.execute('SELECT sales.date, SUM(sales.incomeUnits), SUM(sales.incomeRevenue), sales.unitsByCountry FROM sales WHERE pid=? GROUP BY sales.date ORDER by sales.date DESC', (pid,))
-        return cursor.fetchall() #Pretty much exactly what we want anyway
+        return cursor.fetchall() # Pretty much exactly what we want anyway
 
 
 class AppStoreSalesDataReporting(object):
@@ -71,25 +74,31 @@ class AppStoreSalesDataReporting(object):
         output += '\n</tr>\n'
         
         output += '<tr>\n'
-        output += '<td>Units/day</td>'
+        output += '<td>Average Units</td>'
         for (daysAgo, stats) in self._sortedOverallStats(overallStats):
             output += '<td>%.1f</td>' % (stats[0] / float(max(1, daysAgo)))
         output += '\n</tr>\n'
         
         output += '<tr>\n'
-        output += '<td>Units</td>'
+        output += '<td>Acc. Units</td>'
         for (daysAgo, stats) in self._sortedOverallStats(overallStats):
             output += '<td>%d</td>' % stats[0]
         output += '\n</tr>\n'
+
+        output += '<tr>\n'
+        output += '<td>Revenue</td>'
+        for (daysAgo, stats) in self._sortedOverallStats(overallStats):
+            output += '<td>%.0f SEK</td>' % stats[2]
+        output += '\n</tr>\n'
         
         output += '<tr>\n'
-        output += '<td>Rev/day</td>'
+        output += '<td>Average Revenue</td>'
         for (daysAgo, stats) in self._sortedOverallStats(overallStats):
             output += '<td>%.0f SEK</td>' % (stats[1] / max(1, daysAgo))
         output += '\n</tr>\n'
         
         output += '<tr>\n'
-        output += '<td>Revenue</td>'
+        output += '<td>Acc. Revenue</td>'
         for (daysAgo, stats) in self._sortedOverallStats(overallStats):
             output += '<td>%.0f SEK</td>' % stats[1]
         output += '\n</tr>\n'
