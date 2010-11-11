@@ -20,9 +20,9 @@ class AppStoreSalesDataStorage(object):
                       WHERE ((julianday(sales.date) BETWEEN (julianday(date('now'))-?) AND (julianday(date('now')))) AND sales.incomeRevenue > 0)
                       ORDER by sales.date DESC'''
 
-        revenueSql = '''SELECT SUM(sales.incomeRevenue) FROM sales
-                        WHERE date(sales.date) == date('now', ?)
-                        ORDER by sales.date DESC'''
+        perDaySql = '''SELECT SUM(sales.incomeRevenue), SUM(sales.incomeUnits) FROM sales
+                       WHERE (date(sales.date) == date('now', ?) AND sales.incomeRevenue > 0)
+                       ORDER by sales.date DESC'''
         
         stats = {}
         for daysAgo in dayRanges:
@@ -32,12 +32,13 @@ class AppStoreSalesDataStorage(object):
             if actualDaysAgo != None:
                 daysAgo = int(actualDaysAgo)
                 
-                revenueCursor = self._db.execute(revenueSql, ('%d day' % -daysAgo,))
-                (revenue,) = revenueCursor.fetchone()
+                perDayCursor = self._db.execute(perDaySql, ('%d day' % -daysAgo,))
+                (revenue, units) = perDayCursor.fetchone()
             else:
                 revenue = 0
-                
-            stats[daysAgo] = (max(sumUnits, 0), max(sumRevenue, 0), revenue)
+                units = 0
+            
+            stats[daysAgo] = (max(sumUnits, 0), max(sumRevenue, 0), revenue, units)
         
         return stats
     
@@ -69,14 +70,29 @@ class AppStoreSalesDataReporting(object):
         output = '<table class="full">\n'
         output += '<tr>\n'
         output += '<td>Days ago</td>'
+
+        # If there is no data in the first days, skip them. This makes the average values
+        # more useful when there is no data for a few days due to problems with iTC.
+        firstDayOffset = -1
         for (daysAgo, stats) in self._sortedOverallStats(overallStats):
+            if firstDayOffset == -1:
+                firstDayOffset = daysAgo
             output += '<td>%d</td>' % (daysAgo)
+        output += '\n</tr>\n'
+
+        if firstDayOffset == -1:
+            firstDayOffset = 0
+
+        output += '<tr>\n'
+        output += '<td>Units</td>'
+        for (daysAgo, stats) in self._sortedOverallStats(overallStats):
+            output += '<td>%d</td>' % stats[3]
         output += '\n</tr>\n'
         
         output += '<tr>\n'
         output += '<td>Average Units</td>'
         for (daysAgo, stats) in self._sortedOverallStats(overallStats):
-            output += '<td>%.1f</td>' % (stats[0] / float(max(1, daysAgo)))
+            output += '<td>%.1f</td>' % (stats[0] / float(max(1, daysAgo - firstDayOffset + 1)))
         output += '\n</tr>\n'
         
         output += '<tr>\n'
@@ -94,7 +110,7 @@ class AppStoreSalesDataReporting(object):
         output += '<tr>\n'
         output += '<td>Average Revenue</td>'
         for (daysAgo, stats) in self._sortedOverallStats(overallStats):
-            output += '<td>%.0f SEK</td>' % (stats[1] / max(1, daysAgo))
+            output += '<td>%.0f SEK</td>' % (stats[1] / max(1, daysAgo - firstDayOffset + 1))
         output += '\n</tr>\n'
         
         output += '<tr>\n'
@@ -131,6 +147,7 @@ class AppStoreSalesDataReporting(object):
         
         totalUnits = 0
         totalRevenue = 0
+        count = 0
         
         for row in productChart:
             (date, units, revenue, unitsByCountry) = row
@@ -150,6 +167,10 @@ class AppStoreSalesDataReporting(object):
             else:
                 percentageOfTopRevenue = 0
             numberOfColumns = int(percentageOfTopRevenue * 50)
+            
+            count += 1
+            if count > 9:
+                break
         
         output += '<tr>\n'
         output += '<td>Total</td>'

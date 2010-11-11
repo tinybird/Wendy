@@ -155,17 +155,17 @@ class AppStoreSalesDataMunger(object):
           continue
 
         rowFields = {}
-        rowFields['productID']= row[2]
-        rowFields['date'] = time.strptime(row[9].strip(), '%m/%d/%Y')
-        rowFields['salesType'] = int(row[6])
-        rowFields['units'] = int(row[7])
-        rowFields['buyerCurrencyType'] = row[11]
-        rowFields['priceInBuyerCurrency'] = decimal.Decimal(row[15])
+        rowFields['productID']= row[2] # Vendor id/SKU
+        rowFields['date'] = time.strptime(row[9].strip(), '%m/%d/%Y') # Begin date, was 11
+        rowFields['salesType'] = int(row[6]) # Product type identifier, was 8
+        rowFields['units'] = int(row[7]) # Units, was 9
+        rowFields['buyerCurrencyType'] = row[11] # Customer currency, was 13
+        rowFields['priceInBuyerCurrency'] = decimal.Decimal(row[15]) # Customer price, was 19
         rowFields['sellerCurrencyType'] = currency
         rowFields['priceInSellerCurrency'] = rowFields['priceInBuyerCurrency']
         rowFields['priceInSellerCurrency'] = currencyConverter.convert(rowFields['buyerCurrencyType'],
             rowFields['sellerCurrencyType'], rowFields['date'], rowFields['priceInBuyerCurrency'])
-        rowFields['country'] = row[12]
+        rowFields['country'] = row[12] # Country code, was 14
         
         if rowFields['salesType'] != 7: #We're ignoring Upgrade stats for now
           allRows.append(rowFields)
