@@ -12,11 +12,17 @@ def send_report
   reportCommand = File.join($root, 'scripts', 'report.py')
 
   BobLogger.info "Sending report"
-  CommandLine::execute([reportCommand, '-d', $root]) do |io|
-    Mailer.send(:deliver_sales_report, Settings.report_email_addresses,
-                Settings.sender, "Sales report", io.readlines)
+
+  begin
+    CommandLine::execute([reportCommand, '-d', $root]) do |io|
+      Mailer.send(:deliver_sales_report, Settings.report_email_addresses,
+                  Settings.sender, "Sales report", io.readlines)
+    end
+    puts "Report sent"
+    File.delete(File.join($root, "lastFailureDate"))
+  rescue
+    # Ignore...
   end
-  puts "Report sent"
 end
 
 def process
@@ -40,7 +46,7 @@ def update
   begin
     BobLogger.info "Downloading sales data"
     CommandLine::execute([downloadCommand, '-d', $root, '-u', Settings.itc_username, '-p', Settings.itc_password]) do |io|
-      BobLogger.info io.readlines # "Download succeeded"
+      BobLogger.info "Download succeeded"
     end
     return true
 
@@ -60,25 +66,23 @@ def update
   return false
 end
 
+# For quick report testing...
+#send_report(); exit 0
+
 while(true) do
-  # Check after 14:00 and if we haven't checked before today.
-  if Time.now.localtime.hour >= 14
+  # Check after 13:00 and if we haven't checked before today.
+  if Time.now.localtime.hour >= 13
     db = SQLite3::Database.new(File.join($root, 'sales.sqlite'))
     rows = db.execute("SELECT sales.date FROM sales WHERE date(sales.date) == date('now', '-1 day')")
     if rows.length == 0
       update()
     end
+  end
 
-    hasNewReports = Dir.glob(File.join($root, 'OriginalReports', '*.txt.gz')).length > 0
-    if hasNewReports
-      if process()
-        begin
-          send_report()
-          File.delete(File.join($root, "lastFailureDate"))
-        rescue
-          # Ignore...
-        end
-      end
+  hasNewReports = Dir.glob(File.join($root, 'OriginalReports', '*.txt.gz')).length > 0
+  if hasNewReports
+    if process()
+      send_report()
     end
   end
 
