@@ -2,35 +2,21 @@
   <head>
     <style>
       h3 {
-        background-color:#6bba70;
+        background-color:#356AA0;
         color: white;
         -webkit-border-top-left-radius: 5px;
         -webkit-border-top-right-radius: 5px;
         padding: 3px;
         padding-left: 5px;
 	      margin-bottom: 0px;
+	      text-shadow: #000 1px 1px 1px;
       }
 
-      .box {
-        background-color: #eee;
-        margin-top: 0;
-        margin-bottom: 0;
-        padding: 4px;
-
-        -webkit-border-bottom-left-radius: 5px;
-        -webkit-border-bottom-right-radius: 5px;
-        padding-bottom: 0.5em;
+      h3.resultsHeader {
       }
 
-      .result {
-        font-size: 120%;
-        font-weight: bold;
-        margin: 0;
-        margin-left: 3px;
-      }
-      
       table {
-        /*width:220px;*/
+        width:100%;
         border-collapse:collapse;
         border:0;
         background:#fff;
@@ -38,8 +24,6 @@
         padding-top:1em;
       }
       
-      table.full { width:100%; }
-
       td {
         border:1px dotted #bbb;
         padding:.2em;
@@ -49,17 +33,17 @@
       }
 
       td:nth-child(1) { text-align:left; }
-      td.countries { text-align:left; width:50%; padding-left:0.5em; }
+      td.date { width: 85px; }
+      td.units { width: 40px; }
+      td.revenue { width: 80px; }
+      td.countries { text-align:left; padding-left:0.5em; }
 
       tr:nth-child(even) { background: #ececec; }
 
     </style>
   </head>
   <body>
-    <p class='result'>A new sales report is in!</p>
-
-    <h3>REPORT</h3>
-  	<p class="box"><%= @message %></p>
+  	<%= @message %>
 
   </body>
 </html>

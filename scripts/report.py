@@ -67,7 +67,8 @@ class AppStoreSalesDataReporting(object):
     def _overallSales(self):
         overallStats = self._dataStorage.fetchOverallStats()
         
-        output = '<table class="full">\n'
+        output = '<h3 class="resultsHeader">Results, overall</h3>'
+        output += '<table class="full">\n'
         output += '<tr>\n'
         output += '<td>Days ago</td>'
 
@@ -104,19 +105,19 @@ class AppStoreSalesDataReporting(object):
         output += '<tr>\n'
         output += '<td>Revenue</td>'
         for (daysAgo, stats) in self._sortedOverallStats(overallStats):
-            output += '<td>%.0f SEK</td>' % stats[2]
+            output += '<td>%.0f kr</td>' % stats[2]
         output += '\n</tr>\n'
         
         output += '<tr>\n'
         output += '<td>Average Revenue</td>'
         for (daysAgo, stats) in self._sortedOverallStats(overallStats):
-            output += '<td>%.0f SEK</td>' % (stats[1] / max(1, daysAgo - firstDayOffset + 1))
+            output += '<td>%.0f kr</td>' % (stats[1] / max(1, daysAgo - firstDayOffset + 1))
         output += '\n</tr>\n'
         
         output += '<tr>\n'
         output += '<td>Acc. Revenue</td>'
         for (daysAgo, stats) in self._sortedOverallStats(overallStats):
-            output += '<td>%.0f SEK</td>' % stats[1]
+            output += '<td>%.0f kr</td>' % stats[1]
         output += '\n</tr>\n'
 
         output += '</table>\n\n'
@@ -135,7 +136,8 @@ class AppStoreSalesDataReporting(object):
         return out
 
     def _chartForProductID(self, pid):
-        output = '<table>'
+        output = '<h3 class="resultsHeader">Results, ' + pid + '</h3>'
+        output += '<table>'
         
         productChart = self._dataStorage.fetchStatsForProductID(pid, self._reportRange)
         
@@ -156,9 +158,9 @@ class AppStoreSalesDataReporting(object):
             totalRevenue += revenue
             
             output += '<tr>\n'
-            output += '<td>%s</td>' % date
-            output += '<td>%d</td>' % units
-            output += '<td>%.0f SEK</td>' % revenue
+            output += '<td class="date">%s</td>' % date
+            output += '<td class="units">%d</td>' % units
+            output += '<td class="revenue">%.0f kr</td>' % revenue
             output += '<td class="countries">%s</td>' % self._fixupUnitsByCountry(unitsByCountry)
             output += '\n</tr>\n'
 
@@ -175,7 +177,7 @@ class AppStoreSalesDataReporting(object):
         output += '<tr>\n'
         output += '<td>Total</td>'
         output += '<td>%d</td>' % totalUnits
-        output += '<td>%.0f SEK</td>' % totalRevenue
+        output += '<td>%.0f kr</td>' % totalRevenue
         output += '<td class="countries"></td>'
         output += '\n</tr>\n'
         
@@ -186,12 +188,10 @@ class AppStoreSalesDataReporting(object):
     def generateReport(self):
         report = ''
         
-        report += '<b>Overall:</b>\n'
         report += self._overallSales()
-        
         report += '<br/>\n'
+
         for pid in self._dataStorage.fetchAllProductIDs():
-            report += '<br/><b>Product: %s</b>\n' % pid
             report += self._chartForProductID(pid)
         report += '<br/>\n'
         
