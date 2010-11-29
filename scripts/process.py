@@ -85,9 +85,13 @@ class XavierMediaCurrencyConverter(object):
       return startAmount
     if startAmount == 0:
       return startAmount
+
+    # No MXN support in xavier :/
+    if startCurrency == 'MXN' and targetCurrency == 'SEK':
+        return startAmount * decimal.Decimal('0.560267654')
     
     conversionTable = self.conversionTableForDate(dateTuple)
-                
+    
     startEntry = [e for e in conversionTable if e['target'] == startCurrency][0]
     amountInStartBase = startAmount / startEntry['rate']
                 
