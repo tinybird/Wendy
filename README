@@ -12,13 +12,13 @@ Setting up site wide settings:
 $ mkdir -p ~/.wendy
 $ cat > ~/.wendy/site_config.rb << EOF
 ActionMailer::Base.smtp_settings = {
-  :tls =>            true,
-  :address =>        "smtp.gmail.com",
-  :port =>           587,
-  :domain =>         "yourdomain.com",
-  :authentication => :plain,
-  :user_name =>      "youremail@yourdomain.com",
-  :password =>       "yourpassword"
+  :enable_starttls_auto => true,
+  :address =>              "smtp.gmail.com",
+  :port =>                 587,
+  :domain =>               "yourdomain.com",
+  :authentication =>       :plain,
+  :user_name =>            "youremail@yourdomain.com",
+  :password =>             "yourpassword"
 }
 
 # Mandatory sender email address.
