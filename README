@@ -1,13 +1,19 @@
 Wendy the sales bot
 ===================
 
-This is a simple bot using the iTunesConnectArchiver from rouge amoeba:
+NOTE: This is not currently usable off the shelf. It currently requires an external tool to download the reports, which is not included here. I'll try to add everything needed here directly soon.
+
+
+Introduction
+------------
+
+This is a simple bot partly based on the iTunesConnectArchiver script from rouge amoeba, found at:
 
 http://www.rogueamoeba.com/utm/2009/05/04/itunesconnectarchiver/
 
 
-Setting up site wide settings:
-------------------------------
+Setting up site wide settings
+-----------------------------
 
 $ mkdir -p ~/.wendy
 $ cat > ~/.wendy/site_config.rb << EOF
@@ -39,8 +45,8 @@ Settings.itc_password = 'myPassword'
 EOF
 
 
-Starting the daemon:
------------------
+Starting the daemon
+-------------------
 
 $ ./wendy.rb
 
