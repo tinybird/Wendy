@@ -2,7 +2,6 @@
 
 $: << File.dirname(__FILE__) + '/wendy'
 $: << File.dirname(__FILE__) + '/lib'
-$: << File.dirname(__FILE__) + '/lib/action_mailer_optional_tls/lib'
 $: << File.dirname(__FILE__) + '/lib/command_line'
 $: << File.dirname(__FILE__) + '/helpers'
 
