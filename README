@@ -43,3 +43,13 @@ Starting the daemon:
 -----------------
 
 $ ./wendy.rb
+
+
+Maintenance
+-----------
+
+In case something goes wrong with the database due to changed iTunes Connect report format, you can open the database file using sqlite3 and remove days. An example:
+
+ sqlite3 sales.sqlite
+ delete from sales where sales.date == "2011-01-06";
+ .quit
