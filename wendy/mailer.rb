@@ -11,9 +11,7 @@ class Mailer < ActionMailer::Base
   def update_failed(recipients, from, subject, message)
     @subject      = "[Wendy] #{subject.capitalize} #{Time.now.localtime}"
     @content_type = "text/html"
-    @body         = {
-        :message => message
-    }
+    @message      = message
     @recipients   = recipients
     @from         = from
     @sent_on      = Time.now
@@ -23,9 +21,7 @@ class Mailer < ActionMailer::Base
   def sales_report(recipients, from, subject, message)
     @subject      = "[Wendy] #{subject.capitalize} #{format_date(Time.now.localtime)}"
     @content_type = "text/html"
-    @body         = {
-        :message => message
-    }
+    @message      = message
     @recipients   = recipients
     @from         = from
     @sent_on      = Time.now
@@ -34,5 +30,5 @@ class Mailer < ActionMailer::Base
 
 end
 
-Mailer.template_root = File.dirname(__FILE__) + '/../templates'
+Mailer.prepend_view_path(File.dirname(__FILE__) + '/../templates')
 Mailer.logger = nil #BobLogger.get # for debugging

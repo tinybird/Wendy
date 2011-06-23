@@ -15,8 +15,7 @@ def send_report
 
   begin
     CommandLine::execute([reportCommand, '-d', $root]) do |io|
-      Mailer.send(:deliver_sales_report, Settings.report_email_addresses,
-                  Settings.sender, "Sales report", io.readlines)
+      Mailer.sales_report(Settings.report_email_addresses, Settings.sender, "Sales report", io.readlines).deliver
     end
     puts "Report sent"
     File.delete(File.join($root, "lastFailureDate"))
@@ -57,8 +56,7 @@ def update
     error =  "#{e}".gsub(/-p .* /, '-p *')
     BobLogger.info "Updating sales data failed:\n#{error}"
     if not File.file?(File.join($root, "lastFailureDate"))
-      Mailer.send(:deliver_update_failed, Settings.admin_email_addresses,
-                  Settings.sender, "Sales update failed", error)
+      Mailer.update_failed(Settings.admin_email_addresses, Settings.sender, "Sales update failed", error).deliver
       File.open(File.join($root, "lastFailureDate"), 'w') { |f| f << "#{Time.now}" }
     else
       BobLogger.info "Not sending failure report again"
