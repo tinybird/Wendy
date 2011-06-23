@@ -46,7 +46,9 @@ def update
   begin
     BobLogger.info "Downloading sales data"
     CommandLine::execute([downloadCommand, '-d', $root, '-u', Settings.itc_username, '-p', Settings.itc_password]) do |io|
-      BobLogger.info "Download succeeded"
+      io.lines.each do |line|
+        BobLogger.info " #{line.gsub(/\n/, '')}"
+      end
     end
     return true
 
