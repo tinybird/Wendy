@@ -71,7 +71,7 @@ end
 
 while(true) do
   # Check after xx:xx and if we haven't checked before today.
-  if Time.now.localtime.hour >= 12
+  if Time.now.localtime.hour >= 13
     db = SQLite3::Database.new(File.join($root, 'sales.sqlite'))
     rows = db.execute("SELECT sales.date FROM sales WHERE date(sales.date) == date('now', '-1 day')")
     if rows.length == 0
