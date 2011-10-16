@@ -44,7 +44,7 @@ def update
 
   begin
     BobLogger.info "Downloading sales data"
-    CommandLine::execute([downloadCommand, '-d', $root, '-u', Settings.itc_username, '-p', Settings.itc_password]) do |io|
+    CommandLine::execute([downloadCommand, '-d', $root, '-u', Settings.itc_username, '-p', Settings.itc_password, '-i', Settings.itc_vendorid]) do |io|
       io.lines.each do |line|
         BobLogger.info " #{line.gsub(/\n/, '')}"
       end
