@@ -1,15 +1,17 @@
 Wendy the sales bot
 ===================
 
-NOTE: This is not currently usable off the shelf. It currently requires an external tool to download the reports, which is not included here. I'll try to add everything needed here directly soon.
+NOTE: This is not currently usable off the shelf. It currently requires an external tool to download the reports, which is not included here.
 
 
 Introduction
 ------------
 
-This is a simple bot partly based on the iTunesConnectArchiver script from rouge amoeba, found at:
+This is a simple bot originally based on the iTunesConnectArchiver script from rouge amoeba, found at:
 
 http://www.rogueamoeba.com/utm/2009/05/04/itunesconnectarchiver/
+
+It has since departed quite a bit from that, and doesn't use the HTML scraping code at all.
 
 
 Setting up site wide settings
@@ -42,6 +44,7 @@ Settings.sender = 'wendy@yourdomain.com'
 # Mandatory iTunes connect account information.
 Settings.itc_username = 'me'
 Settings.itc_password = 'myPassword'
+Settings.itc_vendorid = 'myVendorID'
 EOF
 
 
