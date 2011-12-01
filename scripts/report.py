@@ -5,6 +5,7 @@ import sys, os, time
 import optparse
 import sqlite3
 import re
+import json
 
 class AppStoreSalesDataStorage(object):
     def __init__(self, dbPath):
@@ -135,8 +136,8 @@ class AppStoreSalesDataReporting(object):
             out += p.sub(': ', country)
         return out
 
-    def _chartForProductID(self, pid):
-        output = '<h3 class="resultsHeader">Results, ' + pid + '</h3>'
+    def _chartForProductID(self, pid, name):
+        output = '<h3 class="resultsHeader">Results: ' + name + '</h3>'
         output += '<table>'
         
         productChart = self._dataStorage.fetchStatsForProductID(pid, self._reportRange)
@@ -191,8 +192,20 @@ class AppStoreSalesDataReporting(object):
         report += self._overallSales()
         report += '<br/>\n'
 
+        try:
+            pidMapStream = open(os.path.expanduser('~/.wendy/pidMap.json'), 'r').read()
+            pidMapData = json.loads(pidMapStream)
+        except:
+            pidMapData = None
+
         for pid in self._dataStorage.fetchAllProductIDs():
-            report += self._chartForProductID(pid)
+            pidStr = str(pid)
+            try:
+                name = pidMapData[pidStr]
+            except:
+                name = pidStr
+
+            report += self._chartForProductID(pidStr, name)
         report += '<br/>\n'
         
         return report
