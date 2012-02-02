@@ -51,7 +51,7 @@ EOF
 Mapping Product ID to names
 ---------------------------
 
-To get nicer reports, the Product ID of each app can optionally be mapped to a more readly name. This is done by placing a JSON dict in ~/.wendy/pidMap.json. Example:
+To get nicer reports, the Product ID of each app can optionally be mapped to a more friendly name. This is done by placing a JSON dict in ~/.wendy/pidMap.json. Example:
 
 {
  '100' : 'My app',
