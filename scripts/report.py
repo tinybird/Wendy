@@ -186,11 +186,12 @@ class AppStoreSalesDataReporting(object):
         
         return output
     
-    def generateReport(self):
+    def generateReport(self, pids=[]):
         report = ''
         
-        report += self._overallSales()
-        report += '<br/>\n'
+        if pids == []:
+            report += self._overallSales()
+            report += '<br/>\n'
 
         try:
             pidMapStream = open(os.path.expanduser('~/.wendy/pidMap.json'), 'r').read()
@@ -205,6 +206,9 @@ class AppStoreSalesDataReporting(object):
             except:
                 name = pidStr
 
+            if pids != [] and not pidStr in pids:
+                continue
+
             report += self._chartForProductID(pidStr, name)
         report += '<br/>\n'
         
@@ -217,22 +221,22 @@ def main(sysArgs):
     parser.add_option('-d', '--directory',
                       dest='directory', default=None,
                       metavar='/PATH/TO/WORKING-DIR', help='Directory path for database and reports (required)')
-    
+    parser.add_option('-p', '--pids',
+                      dest='pids', default=[],
+                      metavar='LIST OF PIDS', help='List of pids to report)')
+
     (options, arguments) = parser.parse_args(sysArgs)
-    
     optionsValid = (options.directory != None)
-    
     options.reportRange = ()
-    
     if not optionsValid:
         parser.print_help(file = sys.stderr)
         sys.exit(-1)
-    
+
     root = os.path.expanduser(options.directory)
     dataStorage = AppStoreSalesDataStorage(os.path.join(root, 'sales.sqlite'))
-    
+
     reporter = AppStoreSalesDataReporting(dataStorage, options.reportRange)
-    print reporter.generateReport()
+    print reporter.generateReport(options.pids)
 
 if __name__ == '__main__':
     main(sys.argv[1:])
