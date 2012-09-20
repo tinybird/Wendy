@@ -59,6 +59,19 @@ To get nicer reports, the Product ID of each app can optionally be mapped to a m
 }
 
 
+Report groups
+-------------
+
+In case you want to divide groups of apps and send reports to different addresses:
+
+Settings.report_groups = [
+  {
+    'name' => 'My App',
+    'pids' => [ 'pid1', 'pid2', 'pid3' ],
+    'emailAddresses' => [ 'myemail1', 'myemail2' ]
+  }
+]
+
 Starting the daemon
 -------------------
 
