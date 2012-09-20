@@ -2,6 +2,7 @@ require 'platform'
 require 'command_line'
 require 'parsedate'
 require 'sqlite3'
+require 'json'
 
 BobLogger.info "\n========================================================"
 BobLogger.info "Sales bot started at #{Time.now}"
@@ -17,7 +18,22 @@ def send_report
     CommandLine::execute([reportCommand, '-d', $root]) do |io|
       Mailer.sales_report(Settings.report_email_addresses, Settings.sender, "Sales report", io.readlines).deliver
     end
-    puts "Report sent"
+    BobLogger.info "Full report sent"
+
+    Settings.report_groups.each do |group|
+      groupName = group['name']
+      pids = group['pids']
+      email_addresses = group['emailAddresses']
+      #puts " Pids: #{pids.join(', ')}"
+      #puts " Addr: #{email_addresses.join(', ')}"
+
+      pidsOption = '"' + "#{pids.join(' ')}" + '"'
+      CommandLine::execute([reportCommand, '-d', $root, '-p', pidsOption]) do |io|
+        Mailer.sales_report(email_addresses, Settings.sender, "Sales report, #{groupName}", io.readlines).deliver
+      end
+    end
+    BobLogger.info "Group reports sent"
+
     File.delete(File.join($root, "lastFailureDate"))
   rescue
     # Ignore...
