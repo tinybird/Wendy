@@ -170,11 +170,14 @@ class AppStoreSalesDataMunger(object):
         rowFields['priceInSellerCurrency'] = currencyConverter.convert(rowFields['buyerCurrencyType'],
             rowFields['sellerCurrencyType'], rowFields['date'], rowFields['priceInBuyerCurrency'])
         rowFields['country'] = row[12] # Country code, was 14
-        
+
+        # IAP codes: IA1, IA9, IAY, FI1
+
         # We're ignoring Upgrade stats for now.
         # We have older data where type is numeric, and now it's a string after Mac App store started.
-        # F7 is updates in Mac App store.
-        if rowFields['salesType'] != 7 and rowFields['salesType'] != '7' and rowFields['salesType'] != 'F7':
+        # F7 is for updates in Mac App store. The other types were added later at some point.
+        salesTypeString = str(rowFields['salesType'])
+        if salesTypeString != '7' and salesTypeString != '7F' and salesTypeString != 'F7' and salesTypeString != '7T':
           allRows.append(rowFields)
                 
     ### Group our rows by date, and then product, and then process them
