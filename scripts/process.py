@@ -86,15 +86,29 @@ class XavierMediaCurrencyConverter(object):
     if startAmount == 0:
       return startAmount
 
-    # No MXN support in xavier :/
+    # No MXN, TWD support in xavier :/
     if startCurrency == 'MXN' and targetCurrency == 'SEK':
-        return startAmount * decimal.Decimal('0.560267654')
-    
+        return startAmount * decimal.Decimal('0.498812259')
+    elif startCurrency == 'TWD' and targetCurrency == 'SEK':
+        return startAmount * decimal.Decimal('0.217116451')
+    elif startCurrency == 'ILS' and targetCurrency == 'SEK':
+        return startAmount * decimal.Decimal('1.80851409')
+    elif startCurrency == 'INR' and targetCurrency == 'SEK':
+        return startAmount * decimal.Decimal('0.102664953')
+    elif startCurrency == 'TRY' and targetCurrency == 'SEK':
+        return startAmount * decimal.Decimal('3.26067993')
+    elif startCurrency == 'SAR' and targetCurrency == 'SEK':
+        return startAmount * decimal.Decimal('1.73067487')
+
     conversionTable = self.conversionTableForDate(dateTuple)
-    
-    startEntry = [e for e in conversionTable if e['target'] == startCurrency][0]
+
+    try:
+      startEntry = [e for e in conversionTable if e['target'] == startCurrency][0]
+    except Exception as e:
+      sys.stderr.write("Issue with currency: %s\n" % (startCurrency))
+      raise e
     amountInStartBase = startAmount / startEntry['rate']
-                
+
     endEntry = [e for e in conversionTable if e['target'] == targetCurrency][0]
     if endEntry['base'] != startEntry['base']: #Lots of code could handle this case
       return None
