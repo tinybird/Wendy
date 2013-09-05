@@ -3,29 +3,35 @@ require 'action_mailer'
 
 class Mailer < ActionMailer::Base
   helper :mailer
-
+  
   def format_date(time)
     return time.strftime("%Y-%m-%d")
   end
 
   def update_failed(recipients, from, subject, message)
-    @subject      = "[Wendy] #{subject.capitalize} #{Time.now.localtime}"
+    #@subject      = "[Wendy] #{subject.capitalize} #{Time.now.localtime}"
     @content_type = "text/html"
     @message      = message
-    @recipients   = recipients
-    @from         = from
-    @sent_on      = Time.now
     @headers      = {}
+
+    mail(:to => recipients, 
+      :subject => "[Wendy] #{subject.capitalize} #{format_date(Time.now.localtime)}",
+      :from => from,
+      :date => Time.now,
+    )
   end
 
   def sales_report(recipients, from, subject, message)
-    @subject      = "[Wendy] #{subject.capitalize} #{format_date(Time.now.localtime)}"
+    #@subject      = "[Wendy] #{subject.capitalize} #{format_date(Time.now.localtime)}"
     @content_type = "text/html"
     @message      = message
-    @recipients   = recipients
-    @from         = from
-    @sent_on      = Time.now
     @headers      = {}
+    
+    mail(:to => recipients, 
+      :subject => "[Wendy] #{subject.capitalize} #{format_date(Time.now.localtime)}",
+      :from => from,
+      :date => Time.now,
+    )
   end
 
 end
