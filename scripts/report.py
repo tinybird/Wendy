@@ -15,25 +15,40 @@ class AppStoreSalesDataStorage(object):
 
         self._db = sqlite3.connect(dbPath)
     
-    def fetchOverallStats(self, dayRanges=[1,2,3,4,5,6,7,30,90,180,365,9999]):
+    def fetchOverallStats(self, pids):
+        dayRanges=[1,2,3,4,5,6,7,30,90,180,365,9999]
+
+        args = map(lambda x: str(x), pids)
+        args.insert(0, "placeholder")
+
         statsSql = '''SELECT (julianday('now') - julianday(min(sales.date))), SUM(sales.incomeUnits), SUM(sales.incomeRevenue)
                       FROM sales
-                      WHERE ((julianday(sales.date) BETWEEN (julianday(date('now'))-?) AND (julianday(date('now')))) AND sales.incomeRevenue > 0)
+                      WHERE ((julianday(sales.date) BETWEEN (julianday(date('now'))-?) AND (julianday(date('now')))) AND sales.incomeRevenue > 0 AND sales.pid IN ({pf}))
                       ORDER by sales.date DESC'''
-
+        statsSql = statsSql.format(pf = ', '.join(['?']*len(pids)))
+        
         perDaySql = '''SELECT SUM(sales.incomeRevenue), SUM(sales.incomeUnits) FROM sales
-                       WHERE (date(sales.date) == date('now', ?) AND sales.incomeRevenue > 0)
+                       WHERE (date(sales.date) == date('now', ?) AND sales.incomeRevenue > 0 AND sales.pid IN ({pf}))
                        ORDER by sales.date DESC'''
+        perDaySql = perDaySql.format(pf = ', '.join(['?']*len(pids)))
+
+        #args[0] = 100
+        #cursor = self._db.execute(statsSql, args)
+        #print cursor.fetchall()
+        #sys.exit(0) #return {}
+        ###########
         
         stats = {}
         for daysAgo in dayRanges:
-            cursor = self._db.execute(statsSql, (daysAgo,))
+            args[0] = daysAgo
+            cursor = self._db.execute(statsSql, args)
             (actualDaysAgo, sumUnits, sumRevenue) = cursor.fetchone()
             
             if actualDaysAgo != None:
                 daysAgo = int(actualDaysAgo)
                 
-                perDayCursor = self._db.execute(perDaySql, ('%d day' % -daysAgo,))
+                args[0] = '%d day' % -daysAgo
+                perDayCursor = self._db.execute(perDaySql, args)
                 (revenue, units) = perDayCursor.fetchone()
             else:
                 revenue = 0
@@ -65,8 +80,8 @@ class AppStoreSalesDataReporting(object):
     def _sortedOverallStats(self, stats):
         return [(key, stats[key]) for key in sorted(stats.keys())]
     
-    def _overallSales(self):
-        overallStats = self._dataStorage.fetchOverallStats()
+    def _overallSales(self, pids):
+        overallStats = self._dataStorage.fetchOverallStats(pids)
         
         output = '<h3 class="resultsHeader">Results, overall</h3>'
         output += '<table class="full">\n'
@@ -121,6 +136,12 @@ class AppStoreSalesDataReporting(object):
             output += '<td>%.0f kr</td>' % stats[1]
         output += '\n</tr>\n'
 
+        output += '<tr class="minusTaxes">\n'
+        output += '<td>60% of Acc. Rev.</td>'
+        for (daysAgo, stats) in self._sortedOverallStats(overallStats):
+            output += '<td>%.0f kr</td>' % (0.6 * stats[1])
+        output += '\n</tr>\n'
+
         output += '</table>\n\n'
         
         return output
@@ -172,10 +193,10 @@ class AppStoreSalesDataReporting(object):
             numberOfColumns = int(percentageOfTopRevenue * 50)
             
             count += 1
-            if count > 9:
+            if count > 6:
                 break
         
-        output += '<tr>\n'
+        output += '<tr class="total">\n'
         output += '<td>Total</td>'
         output += '<td>%d</td>' % totalUnits
         output += '<td>%.0f kr</td>' % totalRevenue
@@ -190,8 +211,16 @@ class AppStoreSalesDataReporting(object):
         report = ''
         
         if pids == []:
-            report += self._overallSales()
-            report += '<br/>\n'
+            pids = self._dataStorage.fetchAllProductIDs()
+        else:
+            pids = pids.split(' ')
+  
+        report += self._overallSales(pids)
+        report += '<br>\n'
+
+        #print pids
+        #print report
+        #sys.exit(0)
 
         try:
             pidMapStream = open(os.path.expanduser('~/.wendy/pidMap.json'), 'r').read()
@@ -199,18 +228,18 @@ class AppStoreSalesDataReporting(object):
         except:
             pidMapData = None
 
-        for pid in self._dataStorage.fetchAllProductIDs():
+        for pid in pids: #self._dataStorage.fetchAllProductIDs():
             pidStr = str(pid)
             try:
                 name = pidMapData[pidStr]
             except:
                 name = pidStr
 
-            if pids != [] and not pidStr in pids:
-                continue
+            #if pids != [] and not pidStr in pids:
+            #    continue
 
             report += self._chartForProductID(pidStr, name)
-        report += '<br/>\n'
+        report += '<br>\n'
         
         return report
 
