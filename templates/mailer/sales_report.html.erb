@@ -25,12 +25,19 @@
       }
       
       td {
-        border:1px dotted #bbb;
+        border-left:1px solid #ccc;
+        border-right:1px solid #ccc;
         padding:.2em;
         padding-bottom:0.4em;
         padding-top:0.4em;
         text-align:right;
       }
+	  td:first-child {
+	    border-left:none;
+	  }
+	  td:last-child {
+	    border-right:none;
+	  }
 
       td:nth-child(1) { text-align:left; }
       td.date { width: 85px; }
@@ -38,12 +45,14 @@
       td.revenue { width: 80px; }
       td.countries { text-align:left; padding-left:0.5em; }
 
-      tr:nth-child(even) { background: #ececec; }
+      tr:nth-child(even) { background:#ececec; }
+
+	  tr.minusTaxes { font-style:italic; }
+	  tr.total { font-style:italic; }
 
     </style>
   </head>
   <body>
   	<%= raw @message %>
-
   </body>
 </html>
