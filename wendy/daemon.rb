@@ -1,6 +1,5 @@
 require 'platform'
 require 'command_line'
-require 'parsedate'
 require 'sqlite3'
 require 'json'
 
@@ -16,9 +15,13 @@ def send_report
 
   begin
     CommandLine::execute([reportCommand, '-d', $root]) do |io|
-      Mailer.sales_report(Settings.report_email_addresses, Settings.sender, "Sales report", io.readlines).deliver
+      message = io.readlines.join("")
+      mail = Mailer.sales_report(Settings.report_email_addresses, Settings.sender, "Sales report", message)
+      #print "#{reportCommand} -d #{$root}\n"
+      #mail.deliver
+      #print message
+      #BobLogger.info "Full report sent"
     end
-    BobLogger.info "Full report sent"
 
     Settings.report_groups.each do |group|
       groupName = group['name']
@@ -27,12 +30,15 @@ def send_report
       #puts " Pids: #{pids.join(', ')}"
       #puts " Addr: #{email_addresses.join(', ')}"
 
-      pidsOption = '"' + "#{pids.join(' ')}" + '"'
+      pidsOption = pids.join(' ')
       CommandLine::execute([reportCommand, '-d', $root, '-p', pidsOption]) do |io|
-        Mailer.sales_report(email_addresses, Settings.sender, "Sales report, #{groupName}", io.readlines).deliver
+        message = io.readlines.join("")
+        mail = Mailer.sales_report(email_addresses, Settings.sender, "Sales report, #{groupName}", message)
+        mail.deliver
+        #print message
       end
+      BobLogger.info "Group report #{groupName} sent"
     end
-    BobLogger.info "Group reports sent"
 
     File.delete(File.join($root, "lastFailureDate"))
   rescue
