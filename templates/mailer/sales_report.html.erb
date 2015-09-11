@@ -1,55 +1,50 @@
 <html>
   <head>
     <style>
-      h3 {
-        background-color:#356AA0;
-        color: white;
-        -webkit-border-top-left-radius: 5px;
-        -webkit-border-top-right-radius: 5px;
-        padding: 3px;
-        padding-left: 5px;
-	      margin-bottom: 0px;
-	      text-shadow: #000 1px 1px 1px;
-      }
+    h3 {
+      background-color:#356AA0;
+      color:white;
+      border-top-left-radius:5px;
+      border-top-right-radius:5px;
+      padding:3px;
+      padding-left:7px;
+      margin-bottom:0px;
+      font-family:Lucida Grande,Arial,Helvetica,sans-serif;
+    	font-size:85%;
+      font-weight:normal;
+    }
 
-      h3.resultsHeader {
-      }
-
-      table {
-        width:100%;
-        border-collapse:collapse;
-        border:0;
-        background:#fff;
-        font-family:Lucida Grande,Arial,sans-serif;
-        padding-top:1em;
-      }
+    table {
+      width:100%;
+      border-collapse:collapse;
+      border:0;
+      background:#fff;
+      font-family:Lucida Grande,Arial,Helvetica,sans-serif;
+    	font-size:85%;
+      padding-top:1em;
+    }
       
-      td {
+    td {
         border-left:1px solid #ccc;
         border-right:1px solid #ccc;
         padding:.2em;
         padding-bottom:0.4em;
         padding-top:0.4em;
         text-align:right;
-      }
-	  td:first-child {
-	    border-left:none;
-	  }
-	  td:last-child {
-	    border-right:none;
-	  }
+    }
+	  td:first-child { border-left:none; }
+	  td:last-child { border-right:none; }
 
-      td:nth-child(1) { text-align:left; }
-      td.date { width: 85px; }
-      td.units { width: 40px; }
-      td.revenue { width: 80px; }
-      td.countries { text-align:left; padding-left:0.5em; }
+    td:nth-child(1) { text-align:left; }
+    td.date { width:85px; }
+    td.units { width:40px; }
+    td.revenue { width:80px; }
+    td.countries { text-align:left; padding-left:0.5em; }
 
-      tr:nth-child(even) { background:#ececec; }
+    tr:nth-child(even) { background:#ececec; }
 
-	  tr.minusTaxes { font-style:italic; }
-	  tr.total { font-style:italic; }
-
+    tr.minusTaxes { font-style:italic; }
+    tr.total { font-style:italic; }
     </style>
   </head>
   <body>
