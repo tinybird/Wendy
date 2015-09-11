@@ -99,6 +99,8 @@ class XavierMediaCurrencyConverter(object):
         return startAmount * decimal.Decimal('3.26067993')
     elif startCurrency == 'SAR' and targetCurrency == 'SEK':
         return startAmount * decimal.Decimal('1.73067487')
+    elif startCurrency == 'AED' and targetCurrency == 'SEK':
+        return startAmount * decimal.Decimal('1.83307413')
 
     conversionTable = self.conversionTableForDate(dateTuple)
 
