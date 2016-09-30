@@ -3,8 +3,8 @@ require 'English'
 # borrowed (with modifications) from the RSCM project
 module CommandLine
 
-  QUOTE_REPLACEMENT = (Platform.family == "mswin32") ? '"' : '\\"'
-  LESS_THAN_REPLACEMENT = (Platform.family == "mswin32") ? '<' : '\\<'
+  QUOTE_REPLACEMENT = '\\"'
+  LESS_THAN_REPLACEMENT = '\\<'
 
   class OptionError < StandardError; end
   class ExecutionError < StandardError
@@ -164,10 +164,10 @@ module CommandLine
         end
 
     # let's hope that nobody has slashes in directory names on their win32 file system
-    if Platform.family == 'mswin32'
-      stdout_opt.gsub!('/', '\\')
-      stderr_opt.gsub!('/', '\\')
-    end
+    #if Platform.family == 'mswin32'
+    #  stdout_opt.gsub!('/', '\\')
+    #  stderr_opt.gsub!('/', '\\')
+    #end
 
     [stdout_opt, stderr_opt]
   end
@@ -183,7 +183,7 @@ module CommandLine
   module_function :escape_and_concatenate
 
   def escape(item)
-    if Platform.family == 'mswin32'
+    if false #Platform.family == 'mswin32'
       escaped_characters = /\\|&|\||>|<|\^/
       escape_symbol = '^'
       quote_argument = (item =~ /\s/) 
