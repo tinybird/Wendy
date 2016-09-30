@@ -103,7 +103,7 @@ def update(datesToUpdate)
 end
 
 # For quick report testing...
-send_report(); exit 0
+#send_report(); exit 0
 
 while(true) do
   # Check after xx:xx and if we haven't checked before today.
