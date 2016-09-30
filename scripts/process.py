@@ -21,13 +21,13 @@ class AppStoreSalesDataFetcher(object):
     
     dailyData = []
     for filename in os.listdir(self.reportPath):
-      if not filename.endswith('.txt.gz'):
+      if not filename.endswith('.txt'):
         continue
       
       path = os.path.join(self.reportPath, filename)
       #print path
 
-      f = gzip.open(path, 'rb')
+      f = open(path, 'rb')
       dailyData.append(f.read())
       f.close()    
 
@@ -42,7 +42,7 @@ class AppStoreSalesDataFetcher(object):
       pass
 
     for filename in os.listdir(self.reportPath):
-      if not filename.endswith('.txt.gz'):
+      if not filename.endswith('.txt'):
         continue
 
       fromPath = os.path.join(self.reportPath, filename)
@@ -86,21 +86,21 @@ class XavierMediaCurrencyConverter(object):
     if startAmount == 0:
       return startAmount
 
-    # No MXN, TWD support in xavier :/
+    # No MXN, TWD, etc support in xavier :/
     if startCurrency == 'MXN' and targetCurrency == 'SEK':
-        return startAmount * decimal.Decimal('0.498812259')
+        return startAmount * decimal.Decimal('0.439543215')
     elif startCurrency == 'TWD' and targetCurrency == 'SEK':
-        return startAmount * decimal.Decimal('0.217116451')
+        return startAmount * decimal.Decimal('0.274776947')
     elif startCurrency == 'ILS' and targetCurrency == 'SEK':
-        return startAmount * decimal.Decimal('1.80851409')
+        return startAmount * decimal.Decimal('2.29105377')
     elif startCurrency == 'INR' and targetCurrency == 'SEK':
-        return startAmount * decimal.Decimal('0.102664953')
+        return startAmount * decimal.Decimal('0.129258672')
     elif startCurrency == 'TRY' and targetCurrency == 'SEK':
-        return startAmount * decimal.Decimal('3.26067993')
+        return startAmount * decimal.Decimal('2.8650143')
     elif startCurrency == 'SAR' and targetCurrency == 'SEK':
-        return startAmount * decimal.Decimal('1.73067487')
+        return startAmount * decimal.Decimal('2.29303455')
     elif startCurrency == 'AED' and targetCurrency == 'SEK':
-        return startAmount * decimal.Decimal('1.83307413')
+        return startAmount * decimal.Decimal('2.34460367')
 
     conversionTable = self.conversionTableForDate(dateTuple)
 
@@ -172,30 +172,43 @@ class AppStoreSalesDataMunger(object):
         if not len(row):
           continue
         if row[0] != 'APPLE':
+          try:
+            fSKU = row.index("SKU")
+          except:
+            fSKU = row.index("Vendor Identifier") # Older files.
+
+          fBeginDate = row.index("Begin Date")
+          fSalesType = row.index("Product Type Identifier")
+          fUnits = row.index("Units")
+          fBuyerCurrencyType = row.index("Customer Currency")
+          fPriceInBuyerCurrency = row.index("Customer Price")
+          fCountry = row.index("Country Code")
+
+          print fSKU, fBeginDate, fSalesType, fUnits, fBuyerCurrencyType, fPriceInBuyerCurrency, fCountry
           continue
 
         rowFields = {}
-        rowFields['productID']= row[2] # Vendor id/SKU
-        rowFields['date'] = time.strptime(row[9].strip(), '%m/%d/%Y') # Begin date, was 11
-        rowFields['salesType'] = row[6] # Product type identifier, was 8
-        rowFields['units'] = int(row[7]) # Units, was 9
-        rowFields['buyerCurrencyType'] = row[11] # Customer currency, was 13
-        rowFields['priceInBuyerCurrency'] = decimal.Decimal(row[15]) # Customer price, was 19
+        rowFields['productID']= row[fSKU] # Vendor id/SKU
+        rowFields['date'] = time.strptime(row[fBeginDate].strip(), '%m/%d/%Y') # Begin date, was 11
+        rowFields['salesType'] = row[fSalesType] # Product type identifier, was 8
+        rowFields['units'] = int(row[fUnits]) # Units, was 9
+        rowFields['buyerCurrencyType'] = row[fBuyerCurrencyType] # Customer currency, was 13
+        rowFields['priceInBuyerCurrency'] = decimal.Decimal(row[fPriceInBuyerCurrency]) # Customer price, was 19
         rowFields['sellerCurrencyType'] = currency
         rowFields['priceInSellerCurrency'] = rowFields['priceInBuyerCurrency']
         rowFields['priceInSellerCurrency'] = currencyConverter.convert(rowFields['buyerCurrencyType'],
             rowFields['sellerCurrencyType'], rowFields['date'], rowFields['priceInBuyerCurrency'])
-        rowFields['country'] = row[12] # Country code, was 14
+        rowFields['country'] = row[fCountry] # Country code, was 14
 
         # IAP codes: IA1, IA9, IAY, FI1
 
-        # We're ignoring Upgrade stats for now.
+        # We're ignoring Upgrade and Redownload stats for now.
         # We have older data where type is numeric, and now it's a string after Mac App store started.
         # F7 is for updates in Mac App store. The other types were added later at some point.
         salesTypeString = str(rowFields['salesType'])
-        if salesTypeString != '7' and salesTypeString != '7F' and salesTypeString != 'F7' and salesTypeString != '7T':
+        if salesTypeString not in ['7', '7F', 'F7', '7T', '3', '3F', '3T', 'F3']:
           allRows.append(rowFields)
-                
+
     ### Group our rows by date, and then product, and then process them
     allDates = set([row['date'] for row in allRows])
     allProducts = set([row['productID'] for row in allRows])
