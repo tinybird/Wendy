@@ -34,7 +34,7 @@ def send_report
       CommandLine::execute([reportCommand, '-d', $root, '-p', pidsOption]) do |io|
         message = io.readlines.join("")
         mail = Mailer.sales_report(email_addresses, Settings.sender, "Sales report, #{groupName}", message)
-        mail.deliver
+        mail.deliver_now
         #print message
       end
       BobLogger.info "Group report #{groupName} sent"
@@ -61,14 +61,26 @@ def process
   return false
 end
 
-def update
-  downloadCommand = File.join($root, 'scripts', 'WendyHelper')
 
+
+def update(datesToUpdate)
+  downloadCommand = File.join($root, 'itc-reporter', 'reporter.py')
+  origPwd = Dir.pwd
   begin
+    dest = File.join($root, 'OriginalReports')
+    Dir.chdir(dest)
     BobLogger.info "Downloading sales data"
-    CommandLine::execute([downloadCommand, '-d', $root, '-u', Settings.itc_username, '-p', Settings.itc_password, '-i', Settings.itc_vendorid]) do |io|
-      io.lines.each do |line|
-        BobLogger.info " #{line.gsub(/\n/, '')}"
+    for date in datesToUpdate do
+      BobLogger.info date
+      dateStr = date.strftime("%Y%m%d")
+      CommandLine::execute([downloadCommand,
+         '-u', Settings.itc_username,
+         '-p', Settings.itc_password,
+         '-a', Settings.itc_account,
+         'getSalesReport', Settings.itc_vendorid, 'Daily', dateStr]) do |io|
+        io.lines.each do |line|
+          BobLogger.info " #{line.gsub(/\n/, '')}"
+        end
       end
     end
     return true
@@ -78,30 +90,37 @@ def update
     error =  "#{e}".gsub(/-p .* /, '-p *')
     BobLogger.info "Updating sales data failed:\n#{error}"
     if not File.file?(File.join($root, "lastFailureDate"))
-      Mailer.update_failed(Settings.admin_email_addresses, Settings.sender, "Sales update failed", error).deliver
+      Mailer.update_failed(Settings.admin_email_addresses, Settings.sender, "Sales update failed", error).deliver_now
       File.open(File.join($root, "lastFailureDate"), 'w') { |f| f << "#{Time.now}" }
     else
       BobLogger.info "Not sending failure report again"
     end
+  ensure
+    Dir.chdir(origPwd)
   end
 
   return false
 end
 
 # For quick report testing...
-#send_report(); exit 0
+send_report(); exit 0
 
 while(true) do
   # Check after xx:xx and if we haven't checked before today.
   if Time.now.localtime.hour >= 13
     db = SQLite3::Database.new(File.join($root, 'sales.sqlite'))
-    rows = db.execute("SELECT sales.date FROM sales WHERE date(sales.date) == date('now', '-1 day')")
-    if rows.length == 0
-      update()
-    end
+    #rows = db.execute("SELECT sales.date FROM sales WHERE date(sales.date) == date('now', '-1 day')")
+    #if rows.length == 0
+    #  update()
+    #end
+    rows = db.execute("SELECT MAX(date) FROM sales")
+    lastDate = Time.parse(rows[0][0].to_s).to_datetime.next_day(1)
+    today = DateTime.now.next_day(-1)
+    datesToUpdate = lastDate.upto(today)
+    update(datesToUpdate)
   end
 
-  hasNewReports = Dir.glob(File.join($root, 'OriginalReports', '*.txt.gz')).length > 0
+  hasNewReports = Dir.glob(File.join($root, 'OriginalReports', '*.txt')).length > 0
   if hasNewReports
     if process()
       send_report()
