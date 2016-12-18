@@ -69,7 +69,9 @@ def update(datesToUpdate)
   begin
     dest = File.join($root, 'OriginalReports')
     Dir.chdir(dest)
-    BobLogger.info "Downloading sales data"
+    if datesToUpdate.count > 0
+      BobLogger.info "Downloading sales data"
+    end
     for date in datesToUpdate do
       BobLogger.info date
       dateStr = date.strftime("%Y%m%d")
@@ -78,7 +80,7 @@ def update(datesToUpdate)
          '-p', Settings.itc_password,
          '-a', Settings.itc_account,
          'getSalesReport', Settings.itc_vendorid, 'Daily', dateStr]) do |io|
-        io.lines.each do |line|
+        io.each_line do |line|
           BobLogger.info " #{line.gsub(/\n/, '')}"
         end
       end
@@ -107,7 +109,7 @@ end
 
 while(true) do
   # Check after xx:xx and if we haven't checked before today.
-  if Time.now.localtime.hour >= 13
+  if Time.now.localtime.hour >= 18
     db = SQLite3::Database.new(File.join($root, 'sales.sqlite'))
     #rows = db.execute("SELECT sales.date FROM sales WHERE date(sales.date) == date('now', '-1 day')")
     #if rows.length == 0
